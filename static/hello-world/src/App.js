@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@forge/bridge';
-import Spinner from '@atlaskit/spinner';
 
 import './App.css';
 
@@ -11,6 +10,79 @@ const formatFileSize = (bytes) => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Custom Progress Bar component
+const CustomProgressBar = ({ value, appearance = 'default', height = 8 }) => {
+  const normalizedValue = Math.min(Math.max(0, value), 100);
+  
+  const getBarColor = () => {
+    switch (appearance) {
+      case 'success': return '#36B37E';
+      case 'warning': return '#FFAB00';
+      case 'danger': return '#FF5630';
+      default: return '#0052CC';
+    }
+  };
+  
+  return (
+    <div
+      style={{
+        backgroundColor: '#f4f5f7',
+        borderRadius: height / 2,
+        height: `${height}px`,
+        overflow: 'hidden',
+        width: '100%',
+      }}
+      role="progressbar"
+      aria-valuenow={normalizedValue}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <div
+        style={{
+          backgroundColor: getBarColor(),
+          borderRadius: height / 2,
+          height: '100%',
+          transition: 'width 0.3s ease',
+          width: `${normalizedValue}%`,
+        }}
+      />
+    </div>
+  );
+};
+
+// Custom Spinner component
+const CustomSpinner = ({ size = 'medium', color = '#0052CC' }) => {
+  const getSize = () => {
+    switch (size) {
+      case 'small': return 16;
+      case 'large': return 32;
+      default: return 24;
+    }
+  };
+  
+  const spinnerSize = getSize();
+  
+  return (
+    <div
+      style={{
+        display: 'inline-block',
+        width: spinnerSize,
+        height: spinnerSize,
+        border: `2px solid rgba(0, 0, 0, 0.1)`,
+        borderTopColor: color,
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+      }}
+    >
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
 };
 
 // Icons components
@@ -284,7 +356,7 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
               onClick={handleCommentSubmit}
               disabled={!comment.trim() || isSubmitting}
             >
-              {isSubmitting ? <Spinner size="small" /> : <SendIcon />}
+              {isSubmitting ? <CustomSpinner size="small" /> : <SendIcon />}
             </button>
           </div>
         </div>
@@ -394,7 +466,7 @@ function App() {
   if (loading) {
     return (
       <div className="loading-container">
-        <Spinner size="large" />
+        <CustomSpinner size="large" />
         <p>Loading tasks...</p>
       </div>
     );
@@ -450,24 +522,11 @@ function App() {
         <h1>Subtasks Status</h1>
         <div className="progress-section">
           <div className="progress-bar-container">
-            {donePercent > 0 && (
-              <div 
-                className="progress-segment progress-segment-done" 
-                style={{ width: `${donePercent}%` }}
-              />
-            )}
-            {progressPercent > 0 && (
-              <div 
-                className="progress-segment progress-segment-progress" 
-                style={{ width: `${progressPercent}%` }}
-              />
-            )}
-            {todoPercent > 0 && (
-              <div 
-                className="progress-segment progress-segment-todo" 
-                style={{ width: `${todoPercent}%` }}
-              />
-            )}
+            <CustomProgressBar 
+              value={donePercent} 
+              appearance="success" 
+              height={8} 
+            />
           </div>
           <div className="progress-text">
             {Math.round(donePercent)}% Done
