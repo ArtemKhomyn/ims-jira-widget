@@ -4,7 +4,6 @@ modules:
       resource: main
       resolver:
         function: resolver
-      viewportSize: xlarge
       title: Subtask Status and Progress
   function:
     - key: resolver
