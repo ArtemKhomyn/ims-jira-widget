@@ -47,7 +47,8 @@ resolver.define('getSubTasksData', async (req) => {
       issueData.fields.subtasks.map(async (subtask) => {
         try {
           const response = await api.asApp().requestJira(
-            route`/rest/api/3/issue/${subtask.key}?fields=summary,status,description,attachment`
+            route`/rest/api/3/issue/${subtask.key}?fields=summary,status,description,attachment,assignee`
+            // Added assignee to the fields
           );
           const subtaskData = await response.json();
           

@@ -283,19 +283,11 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
   
   // Get assigned team from the issue's assignee field
   const getAssignedTeam = () => {
-    const assignee = subTask.fields.assignee?.displayName;
+    const assignee = subTask.fields.assignee;
     if (!assignee) return "Unassigned";
     
-    // Extract team name based on assignee (simplified logic)
-    if (assignee.toLowerCase().includes('content')) {
-      return "Content Team";
-    } else if (assignee.toLowerCase().includes('design')) {
-      return "Design Team";
-    } else if (assignee.toLowerCase().includes('seo')) {
-      return "SEO Team";
-    }
-    
-    return assignee;
+    // Return the display name or account name
+    return assignee.displayName || assignee.name || "Unassigned";
   };
   
   const handleCommentSubmit = async () => {
