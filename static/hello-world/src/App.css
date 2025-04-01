@@ -8,7 +8,7 @@ html, body, #root, .container {
   .container {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     max-width: 100%;
-    padding: 16px;
+    padding: 10px 10px 10px 0;
     box-sizing: border-box;
   }
   
@@ -39,14 +39,15 @@ html, body, #root, .container {
     margin-right: 16px;
     height: 8px;
     border-radius: 4px;
-    overflow: hidden;
-    display: flex;
     background-color: #F4F5F7;
+    display: flex;
+    gap: 2px; /* Add gap between segments */
   }
   
   .progress-segment {
     height: 100%;
     transition: width 0.3s ease;
+    border-radius: 2px; /* Add rounded corners to segments */
   }
   
   .progress-segment-done {
@@ -59,6 +60,10 @@ html, body, #root, .container {
   
   .progress-segment-waiting {
     background-color: #FF8B00;  /* Orange/Yellow */
+  }
+
+  .progress-segment-neutral {
+    background-color: #6B778C;  /* Grey */
   }
   
   .progress-text {
@@ -174,37 +179,44 @@ html, body, #root, .container {
     gap: 8px;
   }
   
+  /* Common badge styles */
   .status-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 14px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
     font-weight: 500;
+    border: 1px solid;
   }
-  
+
+  /* Completed badge */
   .status-badge-completed {
     background-color: #E3FCEF;
     color: #006644;
+    border-color: #36B37E;
   }
-  
+
+  /* Progress and Pending badges */
+  .status-badge-progress,
+  .status-badge-pending {
+    background-color: #DEEBFF;
+    color: #0747A6;
+    border-color: #0052CC;
+  }
+
+  /* Waiting badges */
+  .status-badge-waiting,
   .status-badge-approval {
     background-color: #FFF8E7;
     color: #974F0C;
-  }
-  
-  .status-badge-waiting {
-    background-color: #FFF8E7;
-    color: #974F0C;
-  }
-  
-  .status-badge-pending, .status-badge-progress, .status-badge-reopened {
-    background-color: #DEEBFF;
-    color: #0747A6;
+    border-color: #FF8B00;
   }
 
+  /* Open and Reopened badges */
   .status-badge-open,
   .status-badge-reopened {
     background-color: #F4F5F7;
     color: #42526E;
+    border-color: #6B778C;
   }
   
   .action-buttons {

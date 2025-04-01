@@ -143,15 +143,8 @@ const ClockIcon = () => (
 
 const RefreshIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" />
-    <path d="M12 3L8 7M12 3L16 7" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round"
-      strokeLinejoin="round" />
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
   </svg>
 );
 
@@ -574,9 +567,6 @@ function App() {
   if (!data || !data.subTasks || data.subTasks.length === 0) {
     return (
       <div className="container">
-        <div className="header">
-          <h1>Subtasks Status</h1>
-        </div>
         <div className="error-container">
           <div className="error-message">There are no sub-tasks associated with this request.</div>
           <button className="btn-approve" onClick={fetchData}>Refresh</button>
@@ -585,54 +575,56 @@ function App() {
     );
   }
   
-  // Count tasks by status
-  const completedTasks = data.subTasks.filter(task => 
-    task.fields.status.name.toLowerCase().includes('done') || 
-    task.fields.status.name.toLowerCase().includes('complete') ||
-    task.fields.status.name.toLowerCase().includes('approved')
-  ).length;
-
-  // Add filters for blue and yellow status tasks
-  const inProgressTasks = data.subTasks.filter(task => {
+  // Update the status counting logic
+  const statusCounts = data.subTasks.reduce((acc, task) => {
     const status = task.fields.status.name.toLowerCase();
-    return status.includes('progress') || 
-           status.includes('pending') || 
-           status.includes('reopened');
-  }).length;
-
-  const waitingTasks = data.subTasks.filter(task => {
-    const status = task.fields.status.name.toLowerCase();
-    return status.includes('waiting');
-  }).length;
+    if (status.includes('done') || 
+        status.includes('complete') || 
+        status.includes('approved')) {
+      acc.completed++;
+    } else if (status.includes('waiting')) {
+      acc.waiting++;
+    } else if (status.includes('progress') || 
+               status.includes('pending') ||
+               status.includes('in review')) {
+      acc.inProgress++;
+    } else if (status === 'open' || 
+               status.includes('reopened')) {
+      acc.neutral++;
+    }
+    return acc;
+  }, { completed: 0, inProgress: 0, waiting: 0, neutral: 0 });
 
   const totalTasks = data.subTasks.length;
-
-  // Calculate percentages for each segment
-  const donePercent = (completedTasks / totalTasks) * 100;
-  const progressPercent = (inProgressTasks / totalTasks) * 100;
-  const waitingPercent = (waitingTasks / totalTasks) * 100;
+  const completedPercent = (statusCounts.completed / totalTasks) * 100;
+  const waitingPercent = (statusCounts.waiting / totalTasks) * 100;
+  const inProgressPercent = (statusCounts.inProgress / totalTasks) * 100;
+  const neutralPercent = (statusCounts.neutral / totalTasks) * 100;
 
   return (
     <div className="container">
       <div className="header">
-        <h1>Subtasks Status</h1>
         <div className="progress-section">
           <div className="progress-bar-container">
             <div 
               className="progress-segment progress-segment-done" 
-              style={{ width: `${donePercent}%` }} 
-            />
-            <div 
-              className="progress-segment progress-segment-progress" 
-              style={{ width: `${progressPercent}%` }} 
+              style={{ width: `${completedPercent}%` }} 
             />
             <div 
               className="progress-segment progress-segment-waiting" 
               style={{ width: `${waitingPercent}%` }} 
             />
+            <div 
+              className="progress-segment progress-segment-progress" 
+              style={{ width: `${inProgressPercent}%` }} 
+            />
+            <div 
+              className="progress-segment progress-segment-neutral" 
+              style={{ width: `${neutralPercent}%` }} 
+            />
           </div>
           <div className="progress-text">
-            {Math.round(donePercent)}% Done
+            {Math.round(completedPercent)}% Done
           </div>
         </div>
       </div>
