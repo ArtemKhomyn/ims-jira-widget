@@ -357,12 +357,6 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
         </div>
         
         <div className="subtask-status-section">
-          {statusInfo.badgeText && (
-            <div className={`status-badge ${statusInfo.badgeClass}`}>
-              {statusInfo.badgeText}
-            </div>
-          )}
-          
           {isApprovalRequired && (
             <div className="action-buttons">
               <button className="btn-approve" onClick={() => onApprove(subTask.key)}>
@@ -371,6 +365,12 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
               <button className="btn-reject" onClick={() => onReject(subTask.key)}>
                 Reject
               </button>
+            </div>
+          )}
+          
+          {statusInfo.badgeText && (
+            <div className={`status-badge ${statusInfo.badgeClass}`}>
+              {statusInfo.badgeText}
             </div>
           )}
           
