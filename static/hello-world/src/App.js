@@ -447,6 +447,32 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
   );
 }
 
+// Add this function before the App component
+const groupSubtasks = (subtasks) => {
+  return subtasks.reduce((groups, subtask) => {
+    const status = subtask.fields.status.name.toLowerCase();
+    
+    if (status.includes('waiting') || status.includes('needs info')) {
+      groups.requiresInput.push(subtask);
+    } else if (status.includes('progress') || status.includes('pending')) {
+      groups.inProgress.push(subtask);
+    } else if (status === 'open' || status.includes('reopened')) {
+      groups.notStarted.push(subtask);
+    } else if (status.includes('done') || 
+               status.includes('complete') || 
+               status.includes('approved')) {
+      groups.completed.push(subtask);
+    }
+    
+    return groups;
+  }, {
+    requiresInput: [],
+    inProgress: [],
+    notStarted: [],
+    completed: []
+  });
+};
+
 function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -601,6 +627,8 @@ function App() {
   const inProgressPercent = (statusCounts.inProgress / totalTasks) * 100;
   const neutralPercent = (statusCounts.neutral / totalTasks) * 100;
 
+  const groupedSubtasks = groupSubtasks(data.subTasks);
+
   return (
     <div className="container">
       <div className="header">
@@ -630,16 +658,73 @@ function App() {
       </div>
       
       <div className="subtasks-list">
-        {data.subTasks.map(subTask => (
-          <SubTaskItem 
-            key={subTask.key}
-            subTask={subTask}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            onAddComment={handleAddComment}
-            onUploadFile={handleFileUpload}
-          />
-        ))}
+        {/* Requires Input section */}
+        {groupedSubtasks.requiresInput.length > 0 && (
+          <div className="subtasks-group">
+            <h2 className="group-heading">Requires Input</h2>
+            {groupedSubtasks.requiresInput.map(subTask => (
+              <SubTaskItem 
+                key={subTask.key}
+                subTask={subTask}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onAddComment={handleAddComment}
+                onUploadFile={handleFileUpload}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Work in Progress section */}
+        {groupedSubtasks.inProgress.length > 0 && (
+          <div className="subtasks-group">
+            <h2 className="group-heading">Work in Progress</h2>
+            {groupedSubtasks.inProgress.map(subTask => (
+              <SubTaskItem 
+                key={subTask.key}
+                subTask={subTask}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onAddComment={handleAddComment}
+                onUploadFile={handleFileUpload}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Not Started section */}
+        {groupedSubtasks.notStarted.length > 0 && (
+          <div className="subtasks-group">
+            <h2 className="group-heading">Not Started</h2>
+            {groupedSubtasks.notStarted.map(subTask => (
+              <SubTaskItem 
+                key={subTask.key}
+                subTask={subTask}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onAddComment={handleAddComment}
+                onUploadFile={handleFileUpload}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Completed section */}
+        {groupedSubtasks.completed.length > 0 && (
+          <div className="subtasks-group">
+            <h2 className="group-heading">Completed</h2>
+            {groupedSubtasks.completed.map(subTask => (
+              <SubTaskItem 
+                key={subTask.key}
+                subTask={subTask}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onAddComment={handleAddComment}
+                onUploadFile={handleFileUpload}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
