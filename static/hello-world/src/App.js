@@ -127,6 +127,41 @@ const SendIcon = () => (
   </svg>
 );
 
+const SpinnerIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+    <path d="M12 6V8M12 16V18M8 12H6M18 12H16M16.24 16.24L14.83 14.83M16.24 7.76L14.83 9.17M7.76 16.24L9.17 14.83M7.76 7.76L9.17 9.17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+    <path d="M12 7V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" />
+    <path d="M12 3L8 7M12 3L16 7" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round"
+      strokeLinejoin="round" />
+  </svg>
+);
+
+const OpenIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+    <path d="M8 12L16 12M16 12L13 9M16 12L13 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 // SubTask component
 function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -144,32 +179,86 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
   
   // Get status info for styling
   const getStatusInfo = () => {
-    if (isCompleted) {
+    const statusLower = status.toLowerCase();
+
+    // Completed/Done states (Green)
+    if (statusLower.includes('done') || 
+        statusLower.includes('complete') || 
+        statusLower.includes('approved')) {
       return {
         icon: <CheckIcon />,
         iconClass: 'icon-completed',
-        itemClass: '',
+        itemClass: 'status-completed',
         badgeClass: 'status-badge-completed',
         badgeText: 'Completed'
       };
-    } else if (isApprovalRequired) {
+    }
+    
+    // Work in Progress states (Blue)
+    if (statusLower.includes('progress')) {
       return {
-        icon: <BellIcon />,
-        iconClass: 'icon-approval',
-        itemClass: '',
-        badgeClass: 'status-badge-approval',
-        badgeText: 'Waiting for Approval'
+        icon: <SpinnerIcon />,
+        iconClass: 'icon-progress',
+        itemClass: 'status-progress',
+        badgeClass: 'status-badge-progress',
+        badgeText: 'Work in Progress'
       };
-    } else if (isWaitingForInfo) {
+    }
+
+    // Pending state (Blue)
+    if (statusLower.includes('pending')) {
+      return {
+        icon: <ClockIcon />,
+        iconClass: 'icon-pending',
+        itemClass: 'status-pending',
+        badgeClass: 'status-badge-pending',
+        badgeText: 'Pending'
+      };
+    }
+
+    // Reopened state (Grey) - Move this before Open check
+    if (statusLower.includes('reopened')) {
+      return {
+        icon: <RefreshIcon />,
+        iconClass: 'icon-reopened',
+        itemClass: 'status-reopened',
+        badgeClass: 'status-badge-reopened',
+        badgeText: 'Reopened'
+      };
+    }
+
+    // Open state (Grey) - Make more specific
+    if (statusLower === 'open') {
+      return {
+        icon: <OpenIcon />,
+        iconClass: 'icon-open',
+        itemClass: 'status-open',
+        badgeClass: 'status-badge-open',
+        badgeText: 'Open'
+      };
+    }
+
+    // Waiting states (Orange)
+    if (statusLower.includes('waiting')) {
+      if (statusLower.includes('approval')) {
+        return {
+          icon: <BellIcon />,
+          iconClass: 'icon-approval',
+          itemClass: 'status-approval',
+          badgeClass: 'status-badge-approval',
+          badgeText: 'Waiting for Approval'
+        };
+      }
       return {
         icon: <WarningIcon />,
         iconClass: 'icon-warning',
         itemClass: 'status-warning',
         badgeClass: 'status-badge-waiting',
-        badgeText: 'Waiting for additional info'
+        badgeText: 'Waiting for Customer'
       };
     }
-    
+
+    // Default fallback
     return {
       icon: <BellIcon />,
       iconClass: '',
@@ -502,30 +591,44 @@ function App() {
     task.fields.status.name.toLowerCase().includes('complete') ||
     task.fields.status.name.toLowerCase().includes('approved')
   ).length;
-  
-  const inProgressTasks = data.subTasks.filter(task => 
-    task.fields.status.name.toLowerCase().includes('progress') || 
-    task.fields.status.name.toLowerCase().includes('review')
-  ).length;
-  
+
+  // Add filters for blue and yellow status tasks
+  const inProgressTasks = data.subTasks.filter(task => {
+    const status = task.fields.status.name.toLowerCase();
+    return status.includes('progress') || 
+           status.includes('pending') || 
+           status.includes('reopened');
+  }).length;
+
+  const waitingTasks = data.subTasks.filter(task => {
+    const status = task.fields.status.name.toLowerCase();
+    return status.includes('waiting');
+  }).length;
+
   const totalTasks = data.subTasks.length;
-  const todoTasks = totalTasks - completedTasks - inProgressTasks;
-  
+
   // Calculate percentages for each segment
   const donePercent = (completedTasks / totalTasks) * 100;
   const progressPercent = (inProgressTasks / totalTasks) * 100;
-  const todoPercent = (todoTasks / totalTasks) * 100;
-  
+  const waitingPercent = (waitingTasks / totalTasks) * 100;
+
   return (
     <div className="container">
       <div className="header">
         <h1>Subtasks Status</h1>
         <div className="progress-section">
           <div className="progress-bar-container">
-            <CustomProgressBar 
-              value={donePercent} 
-              appearance="success" 
-              height={8} 
+            <div 
+              className="progress-segment progress-segment-done" 
+              style={{ width: `${donePercent}%` }} 
+            />
+            <div 
+              className="progress-segment progress-segment-progress" 
+              style={{ width: `${progressPercent}%` }} 
+            />
+            <div 
+              className="progress-segment progress-segment-waiting" 
+              style={{ width: `${waitingPercent}%` }} 
             />
           </div>
           <div className="progress-text">

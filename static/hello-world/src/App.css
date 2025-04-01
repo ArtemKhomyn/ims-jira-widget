@@ -41,22 +41,24 @@ html, body, #root, .container {
     border-radius: 4px;
     overflow: hidden;
     display: flex;
+    background-color: #F4F5F7;
   }
   
   .progress-segment {
     height: 100%;
+    transition: width 0.3s ease;
   }
   
   .progress-segment-done {
-    background-color: #36B37E;
+    background-color: #36B37E;  /* Green */
   }
   
   .progress-segment-progress {
-    background-color: #0052CC;
+    background-color: #0052CC;  /* Blue */
   }
   
-  .progress-segment-todo {
-    background-color: #DFE1E6;
+  .progress-segment-waiting {
+    background-color: #FF8B00;  /* Orange/Yellow */
   }
   
   .progress-text {
@@ -77,6 +79,28 @@ html, body, #root, .container {
   .subtask-item.status-warning {
     border-left: 4px solid #FF8B00;
     background-color: #FFFBF6;
+  }
+  
+  .subtask-item.status-pending, .subtask-item.status-progress, .subtask-item.status-reopened {
+    border-left: 4px solid #0052CC;
+    background-color: #F8FAFF;
+  }
+
+  .subtask-item.status-completed {
+    border-left: 4px solid #36B37E;
+    background-color: #F4FFF8;
+  }
+
+  .subtask-item.status-warning, .subtask-item.status-approval {
+    border-left: 4px solid #FF8B00;
+    background-color: #FFFBF6;
+  }
+
+  /* Grey status styling */
+  .subtask-item.status-open,
+  .subtask-item.status-reopened {
+    border-left: 4px solid #6B778C;
+    background-color: #F4F5F7;
   }
   
   .subtask-header {
@@ -111,6 +135,19 @@ html, body, #root, .container {
   
   .icon-warning {
     color: #FF8B00;
+  }
+  
+  .icon-pending, .icon-progress, .icon-reopened {
+    color: #0052CC;
+  }
+
+  .icon-approval, .icon-warning {
+    color: #FF8B00;
+  }
+
+  .icon-open,
+  .icon-reopened {
+    color: #6B778C;
   }
   
   .subtask-info {
@@ -157,6 +194,17 @@ html, body, #root, .container {
   .status-badge-waiting {
     background-color: #FFF8E7;
     color: #974F0C;
+  }
+  
+  .status-badge-pending, .status-badge-progress, .status-badge-reopened {
+    background-color: #DEEBFF;
+    color: #0747A6;
+  }
+
+  .status-badge-open,
+  .status-badge-reopened {
+    background-color: #F4F5F7;
+    color: #42526E;
   }
   
   .action-buttons {
