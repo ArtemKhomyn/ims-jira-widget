@@ -4,17 +4,11 @@
   "private": true,
   "homepage": ".",
   "dependencies": {
-    "@atlaskit/badge": "^15.0.0",
-    "@atlaskit/button": "^16.0.0",
-    "@atlaskit/comment": "^10.0.0",
     "@atlaskit/css-reset": "^6.0.0",
-    "@atlaskit/form": "^8.0.0",
-    "@atlaskit/section-message": "^6.0.0",
-    "@atlaskit/textfield": "^5.0.0",
     "@forge/bridge": "^2.5.0",
     "ajv": "^8.12.0",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "react-scripts": "^5.0.1"
