@@ -126,26 +126,40 @@ resolver.define('getSubTasksData', async (req) => {
             if (subtaskData.fields?.comment?.comments) {
               console.log("Processing comments for subtask:", subtask.key);
               
+              // Log the first comment raw data to see all available fields
+              if (subtaskData.fields.comment.comments.length > 0) {
+                console.log("Raw first comment data:", JSON.stringify(subtaskData.fields.comment.comments[0], null, 2));
+              }
+              
               subtaskData.comments = subtaskData.fields.comment.comments.map(comment => {
-                // Build a proper Atlassian avatar URL
-                const accountId = comment.author.accountId;
-                console.log("Comment author account ID:", accountId);
+                // Try to find the avatar URL from the author object
+                const authorData = comment.author;
+                let avatarUrl = null;
                 
-                // Use the official Atlassian avatar URL format
-                const avatarUrl = accountId ? 
-                  `https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/avatars/${accountId}/48` : 
-                  null;
+                // Check for avatarUrls object with different sizes (common in Jira Cloud)
+                if (authorData.avatarUrls) {
+                  avatarUrl = authorData.avatarUrls['48x48'] || 
+                             authorData.avatarUrls['32x32'] || 
+                             authorData.avatarUrls['24x24'] || 
+                             authorData.avatarUrls['16x16'];
+                }
                 
-                console.log("Generated avatar URL:", avatarUrl);
+                // Fallback to avatar property if available
+                if (!avatarUrl && authorData.avatar) {
+                  avatarUrl = authorData.avatar;
+                }
+                
+                console.log(`Author ${authorData.displayName} avatar URL:`, avatarUrl);
                 
                 return {
                   id: comment.id,
                   body: comment.body,
+                  bodyText: extractTextFromADF(comment.body),
                   created: comment.created,
                   updated: comment.updated,
                   author: {
-                    accountId: comment.author.accountId,
-                    displayName: comment.author.displayName,
+                    accountId: authorData.accountId,
+                    displayName: authorData.displayName,
                     avatarUrl: avatarUrl
                   }
                 };
@@ -191,6 +205,53 @@ resolver.define('getSubTasksData', async (req) => {
     };
   }
 });
+
+// Helper function to extract text from ADF
+function extractTextFromADF(adf) {
+  let text = '';
+  
+  if (!adf || !adf.content) return text;
+  
+  // Process each content block
+  for (const block of adf.content) {
+    if (block.type === 'paragraph' || block.type === 'heading') {
+      if (block.content) {
+        // Process paragraph/heading content
+        for (const item of block.content) {
+          if (item.type === 'text') {
+            text += item.text || '';
+          } else if (item.type === 'mention') {
+            text += `@${item.attrs?.text || ''}`;
+          } else if (item.type === 'emoji') {
+            text += item.attrs?.shortName || '';
+          } else if (item.type === 'hardBreak') {
+            text += '\n';
+          }
+        }
+        text += '\n';
+      }
+    } else if (block.type === 'bulletList' || block.type === 'orderedList') {
+      // Process lists
+      if (block.content) {
+        for (const listItem of block.content) {
+          if (listItem.type === 'listItem' && listItem.content) {
+            for (const itemContent of listItem.content) {
+              if (itemContent.content) {
+                for (const innerItem of itemContent.content) {
+                  if (innerItem.type === 'text') {
+                    text += `• ${innerItem.text || ''}\n`;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return text;
+}
 
 // Update the addComment resolver
 resolver.define('addComment', async (req) => {

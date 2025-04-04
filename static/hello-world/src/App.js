@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@forge/bridge';
+import ADFRenderer from './ADFRenderer';
 
 import './App.css';
 
@@ -399,6 +400,26 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
     }
   }, [subTask]);
 
+  // Add this helper function to the component:
+  const extractTextFromADF = (adf) => {
+    if (!adf || !adf.content) return '';
+    
+    let text = '';
+    
+    // Simple extraction for display purposes
+    adf.content.forEach(block => {
+      if (block.content) {
+        block.content.forEach(item => {
+          if (item.text) {
+            text += item.text;
+          }
+        });
+      }
+    });
+    
+    return text;
+  };
+
   return (
     <div className={`subtask-item ${statusInfo.itemClass}`}>
       <div className="subtask-header">
@@ -485,10 +506,6 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
                         <>
                           <div 
                             className="user-avatar-container"
-                            style={{
-                              backgroundColor: generateColorFromName(comment.author.displayName),
-                              color: '#FFFFFF'
-                            }}
                           >
                             {comment.author.avatarUrl ? (
                               <img 
@@ -522,7 +539,7 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
                   <div className="comment-content">
                     {typeof comment.body === 'string' 
                       ? comment.body 
-                      : comment.body?.content?.[0]?.content?.[0]?.text || ''}
+                      : <ADFRenderer document={comment.body} />}
                   </div>
                 </div>
               ))}
