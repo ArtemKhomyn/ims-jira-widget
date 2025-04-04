@@ -4,95 +4,183 @@ import api, { route } from '@forge/api';
 const resolver = new Resolver();
 
 resolver.define('getSubTasksData', async (req) => {
-  const { issueKey } = req.context;
-  console.log('Processing request for issue:', issueKey);
+  // Initial logging
+  console.log('\n=== Starting getSubTasksData resolver ===');
+  console.log('Full request:', JSON.stringify(req, null, 2));
   
-  try {
-    // Get request key from context
-    const requestKey = req.context.extension?.request?.key;
-    console.log('Request key from context:', requestKey);
-    
-    if (!requestKey) {
-      return {
-        success: false,
-        error: "No request key found in context",
-        context: req.context
-      };
-    }
-    
-    // Get the issue with its subtasks directly
-    const issueResponse = await api.asApp().requestJira(
-      route`/rest/api/3/issue/${requestKey}?fields=summary,description,status,subtasks`
-    );
-    
-    if (!issueResponse.ok) {
-      return {
-        success: false,
-        error: `Failed to get issue: ${issueResponse.status}`,
-        context: req.context
-      };
-    }
-    
-    const issueData = await issueResponse.json();
-    console.log('Main issue data retrieved:', issueData.key);
-    
-    // If no subtasks field or empty subtasks
-    if (!issueData.fields?.subtasks || issueData.fields.subtasks.length === 0) {
-      console.log('No subtasks found in the subtasks field');
-      return { mainIssue: issueData, subTasks: [], success: true };
-    }
-    
-    // Get complete data for each subtask
-    const subtasksWithDetails = await Promise.all(
-      issueData.fields.subtasks.map(async (subtask) => {
-        try {
-          const response = await api.asApp().requestJira(
-            route`/rest/api/3/issue/${subtask.key}?fields=summary,status,description,attachment,assignee`
-            // Added assignee to the fields
-          );
-          const subtaskData = await response.json();
-          
-          // Get comments for this subtask
-          const commentsResponse = await api.asApp().requestJira(
-            route`/rest/api/3/issue/${subtask.key}/comment`
-          );
-          const commentsData = await commentsResponse.json();
-          
-          return { 
-            ...subtaskData, 
-            comments: commentsData.comments || [],
-            attachments: subtaskData.fields?.attachment || []
-          };
-        } catch (err) {
-          console.error('Error getting subtask details:', err);
-          return subtask;
-        }
-      })
-    );
-    
-    console.log(`Found ${subtasksWithDetails.length} subtasks`);
-    return {
-      mainIssue: issueData,
-      subTasks: subtasksWithDetails,
-      success: true
-    };
-  } catch (error) {
-    console.error('Error in getSubTasksData:', error);
+  // Extract issue key from the extension context
+  const issueKey = req.context.extension?.request?.key;
+  console.log(`\n[1] Request Processing`);
+  console.log(`→ Processing request for issue: ${issueKey}`);
+
+  if (!issueKey) {
+    console.error('✗ No issueKey found in extension context');
     return {
       success: false,
-      error: error.message,
-      mainIssue: null,
-      subTasks: []
+      error: 'No issue key found in request context'
+    };
+  }
+  console.log(`✓ Issue key found: ${issueKey}`);
+
+  try {
+    // Fetch the Service Management issue
+    console.log(`\n[2] Fetching Service Management Issue`);
+    console.log(`→ Requesting issue data for: ${issueKey}`);
+    
+    const issueResponse = await api.asApp().requestJira(
+      route`/rest/api/3/issue/${issueKey}?fields=issuelinks,project,subtasks`
+    );
+
+    if (!issueResponse.ok) {
+      const errorBody = await issueResponse.text();
+      console.error(`✗ Failed to get issue ${issueKey}. Status: ${issueResponse.status}`);
+      console.error(`Error details: ${errorBody}`);
+      return {
+        success: false,
+        error: `Failed to get issue (${issueResponse.status}): ${errorBody}`,
+      };
+    }
+
+    const issueData = await issueResponse.json();
+    console.log(`✓ Successfully fetched issue: ${issueKey}`);
+    console.log(`→ Issue links found: ${issueData.fields.issuelinks.length}`);
+    console.log('Issue links:', JSON.stringify(issueData.fields.issuelinks, null, 2));
+
+    // Find linked Software issues
+    console.log(`\n[3] Processing Linked Issues`);
+    const linkedIssues = issueData.fields.issuelinks.filter(link => {
+      const linkedIssueKey = link.outwardIssue?.key || link.inwardIssue?.key;
+      // Update the check to handle different JSW project key formats
+      const isJSW = linkedIssueKey && (
+        linkedIssueKey.startsWith('JSW-') || 
+        linkedIssueKey.startsWith('JSW2-') ||
+        linkedIssueKey.includes('JSW')
+      );
+      console.log(`→ Checking link: ${linkedIssueKey} (is JSW: ${isJSW})`);
+      return isJSW;
+    });
+
+    if (linkedIssues.length === 0) {
+      console.error(`✗ No JSW issues found in ${issueData.fields.issuelinks.length} links`);
+      return {
+        success: false,
+        error: 'No linked Software issues found'
+      };
+    }
+
+    console.log(`✓ Found ${linkedIssues.length} JSW issue(s)`);
+    linkedIssues.forEach(link => {
+      const key = link.outwardIssue?.key || link.inwardIssue?.key;
+      console.log(`  → JSW Issue: ${key}`);
+    });
+
+    // Get subtasks from linked Software issues
+    console.log(`\n[4] Fetching Subtasks`);
+    const subtasksPromises = linkedIssues.map(async (linkedIssue) => {
+      const softwareIssueKey = linkedIssue.outwardIssue?.key || linkedIssue.inwardIssue?.key;
+      console.log(`\n→ Processing JSW issue: ${softwareIssueKey}`);
+
+      // Update the software issue fetch to include more fields
+      const softwareIssueResponse = await api.asApp().requestJira(
+        route`/rest/api/3/issue/${softwareIssueKey}?fields=subtasks,summary,status,issuelinks,project&expand=subtasks`
+      );
+
+      if (!softwareIssueResponse.ok) {
+        console.error(`✗ Failed to fetch JSW issue: ${softwareIssueKey}`);
+        return [];
+      }
+
+      const softwareIssueData = await softwareIssueResponse.json();
+      console.log(`✓ Fetched JSW issue: ${softwareIssueKey}`);
+      console.log('Software issue data:', JSON.stringify(softwareIssueData, null, 2));
+
+      // For company-managed projects, subtasks are directly in the subtasks field
+      const subtasks = softwareIssueData.fields?.subtasks || [];
+      console.log(`→ Found ${subtasks.length} subtasks in ${softwareIssueKey}`);
+
+      if (subtasks.length === 0) {
+        console.log(`✗ No subtasks found in ${softwareIssueKey}`);
+        return [];
+      }
+
+      // Fetch complete data for each subtask
+      return Promise.all(
+        subtasks.map(async (subtask) => {
+          try {
+            console.log(`→ Fetching subtask details: ${subtask.key}`);
+            const response = await api.asApp().requestJira(
+              route`/rest/api/3/issue/${subtask.key}?fields=summary,status,description,assignee,issuetype,priority,comment&expand=renderedFields,comments`
+            );
+            
+            if (!response.ok) {
+              console.error(`✗ Failed to fetch subtask ${subtask.key}: ${response.status}`);
+              return subtask;
+            }
+
+            // Update the subtask processing section in getSubTasksData resolver
+            const subtaskData = await response.json();
+            console.log(`✓ Successfully fetched subtask ${subtask.key}: ${subtaskData.fields?.summary}`);
+            console.log(`→ Comments found: ${subtaskData.fields?.comment?.comments?.length || 0}`);
+
+            // Process comments to include only necessary data and move them to top level
+            if (subtaskData.fields?.comment?.comments) {
+              subtaskData.comments = subtaskData.fields.comment.comments.map(comment => ({
+                id: comment.id,
+                body: comment.body,
+                created: comment.created,
+                updated: comment.updated,
+                author: {
+                  displayName: comment.author.displayName,
+                  avatarUrl: comment.author.avatarUrl
+                }
+              }));
+            }
+
+            return subtaskData;
+          } catch (err) {
+            console.error(`✗ Error fetching subtask ${subtask.key}:`, err);
+            return subtask;
+          }
+        })
+      );
+    });
+
+    const allSubtasks = await Promise.all(subtasksPromises);
+    const flattenedSubtasks = allSubtasks.flat();
+
+    console.log(`\n=== Final Results ===`);
+    console.log(`✓ Total subtasks found: ${flattenedSubtasks.length}`);
+    if (flattenedSubtasks.length > 0) {
+      console.log('Subtasks:', flattenedSubtasks.map(st => 
+        `${st.key} (${st.fields?.status?.name})`
+      ).join(', '));
+    }
+
+    return {
+      success: true,
+      subTasks: flattenedSubtasks
+    };
+
+  } catch (error) {
+    console.error('\n✗ Error in getSubTasksData:', error);
+    console.error('Stack trace:', error.stack);
+    return {
+      success: false,
+      error: error.message
     };
   }
 });
 
-// Add comment to an issue
+// Update the addComment resolver
 resolver.define('addComment', async (req) => {
   const { issueKey, comment } = req.payload;
+  const userAccountId = req.context.accountId; // Get the user's account ID from context
   
   try {
-    const response = await api.asApp().requestJira(
+    console.log(`Adding comment to ${issueKey} as user ${userAccountId}`);
+    
+    // Use asUser() instead of asApp() to post comment as the current user
+    const response = await api.asUser().requestJira(
       route`/rest/api/3/issue/${issueKey}/comment`,
       {
         method: 'POST',
@@ -101,15 +189,15 @@ resolver.define('addComment', async (req) => {
         },
         body: JSON.stringify({
           body: {
-            type: 'doc',
+            type: "doc",
             version: 1,
             content: [
               {
-                type: 'paragraph',
+                type: "paragraph",
                 content: [
                   {
-                    text: comment,
-                    type: 'text'
+                    type: "text",
+                    text: comment
                   }
                 ]
               }
@@ -119,7 +207,15 @@ resolver.define('addComment', async (req) => {
       }
     );
     
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to add comment: ${errorText}`);
+      throw new Error(`Failed to add comment: ${response.status}`);
+    }
+    
     const commentData = await response.json();
+    console.log(`✓ Successfully added comment to ${issueKey}`);
+    
     return {
       success: true,
       comment: commentData

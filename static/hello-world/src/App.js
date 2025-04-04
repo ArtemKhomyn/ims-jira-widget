@@ -408,10 +408,10 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
             </div>
           </div>
           
-          {subTask.comments && subTask.comments.length > 0 && (
+          {(subTask.comments || subTask.fields?.comment?.comments) && (
             <div className="comments-section">
               <h4 className="comments-heading">Comments</h4>
-              {subTask.comments.map(comment => (
+              {(subTask.comments || subTask.fields?.comment?.comments).map(comment => (
                 <div key={comment.id} className="comment-item">
                   <div className="comment-header">
                     <span className="comment-author">{comment.author.displayName}</span>
@@ -481,6 +481,20 @@ const groupSubtasks = (subtasks) => {
     notStarted: [],
     completed: []
   });
+};
+
+const fetchSubtasks = async () => {
+  try {
+    console.log('Calling resolver with context:', { issueKey: 'YOUR-ISSUE-KEY' });
+    const result = await invoke('getSubTasksData', { 
+      context: { 
+        issueKey: 'YOUR-ISSUE-KEY' // Make sure this is being set correctly
+      }
+    });
+    console.log('Resolver result:', result);
+  } catch (error) {
+    console.error('Error in fetchSubtasks:', error);
+  }
 };
 
 function App() {

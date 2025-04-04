@@ -24,3 +24,4 @@ permissions:
     - read:issue:jira
     - write:issue:jira
     - read:user:jira
+    - storage:app

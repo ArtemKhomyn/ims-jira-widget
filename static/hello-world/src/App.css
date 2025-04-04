@@ -308,6 +308,8 @@ html, body, #root, .container {
   
   .comment-input input {
     width: 100%;
+    max-width: 100%; /* Ensure it doesn't exceed the container's width */
+    box-sizing: border-box; /* Include padding and border in the width calculation */
     padding: 12px;
     border: 1px solid #DFE1E6;
     border-radius: 3px;
