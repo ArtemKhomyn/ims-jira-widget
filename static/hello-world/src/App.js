@@ -173,6 +173,51 @@ const ProgressIcon = () => (
   </svg>
 );
 
+// Create a helper function at the top of the file
+const getAvatarUrl = (accountId) => {
+  if (!accountId || accountId === 'addon_oneims-jsm-subtask-widget') {
+    return null;
+  }
+  return `https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/avatars/${accountId}/48`;
+};
+
+// Add this helper function at the top of your file 
+const getInitials = (name) => {
+  if (!name) return '?';
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+};
+
+// Add this helper function to generate colors based on name
+const generateColorFromName = (name) => {
+  if (!name) return '#6B778C';
+  
+  // Define a set of colors to use
+  const colors = [
+    '#0052CC', // Blue
+    '#00B8D9', // Cyan
+    '#36B37E', // Green
+    '#6554C0', // Purple
+    '#FF5630', // Red
+    '#FF8B00', // Orange
+    '#6B778C', // Grey
+  ];
+  
+  // Create a hash from the name
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  // Choose a color based on the hash
+  const index = Math.abs(hash % colors.length);
+  return colors[index];
+};
+
 // SubTask component
 function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -335,6 +380,25 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
     setIsExpanded(!isExpanded);
   };
 
+  useEffect(() => {
+    console.log("SubTask comments:", subTask.comments || subTask.fields?.comment?.comments);
+    
+    // Log details for all comments
+    const comments = subTask.comments || subTask.fields?.comment?.comments;
+    if (comments && comments.length > 0) {
+      console.log(`Found ${comments.length} comments for subtask ${subTask.key}`);
+      
+      comments.forEach((comment, index) => {
+        console.log(`Comment ${index + 1}:`, {
+          id: comment.id,
+          author: comment.author,
+          avatarUrl: comment.author.avatarUrl,
+          accountId: comment.author.accountId
+        });
+      });
+    }
+  }, [subTask]);
+
   return (
     <div className={`subtask-item ${statusInfo.itemClass}`}>
       <div className="subtask-header">
@@ -414,7 +478,37 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
               {(subTask.comments || subTask.fields?.comment?.comments).map(comment => (
                 <div key={comment.id} className="comment-item">
                   <div className="comment-header">
-                    <span className="comment-author">{comment.author.displayName}</span>
+                    <span className="comment-author">
+                      {comment.author.accountId === 'addon_oneims-jsm-subtask-widget' ? (
+                        <span className="app-avatar">APP</span>
+                      ) : (
+                        <>
+                          <div 
+                            className="user-avatar-container"
+                            style={{
+                              backgroundColor: generateColorFromName(comment.author.displayName),
+                              color: '#FFFFFF'
+                            }}
+                          >
+                            {comment.author.avatarUrl ? (
+                              <img 
+                                src={comment.author.avatarUrl} 
+                                alt={comment.author.displayName}
+                                className="user-avatar"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextElementSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className="fallback-avatar-text">
+                              {getInitials(comment.author.displayName)}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      <span>{comment.author.displayName}</span>
+                    </span>
                     <span className="comment-time">
                       {new Date(comment.created).toLocaleString(undefined, {
                         day: '2-digit',

@@ -122,18 +122,39 @@ resolver.define('getSubTasksData', async (req) => {
             console.log(`✓ Successfully fetched subtask ${subtask.key}: ${subtaskData.fields?.summary}`);
             console.log(`→ Comments found: ${subtaskData.fields?.comment?.comments?.length || 0}`);
 
-            // Process comments to include only necessary data and move them to top level
+            // Update the comments processing in the getSubTasksData resolver:
             if (subtaskData.fields?.comment?.comments) {
-              subtaskData.comments = subtaskData.fields.comment.comments.map(comment => ({
-                id: comment.id,
-                body: comment.body,
-                created: comment.created,
-                updated: comment.updated,
-                author: {
-                  displayName: comment.author.displayName,
-                  avatarUrl: comment.author.avatarUrl
-                }
-              }));
+              console.log("Processing comments for subtask:", subtask.key);
+              
+              subtaskData.comments = subtaskData.fields.comment.comments.map(comment => {
+                // Build a proper Atlassian avatar URL
+                const accountId = comment.author.accountId;
+                console.log("Comment author account ID:", accountId);
+                
+                // Use the official Atlassian avatar URL format
+                const avatarUrl = accountId ? 
+                  `https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/avatars/${accountId}/48` : 
+                  null;
+                
+                console.log("Generated avatar URL:", avatarUrl);
+                
+                return {
+                  id: comment.id,
+                  body: comment.body,
+                  created: comment.created,
+                  updated: comment.updated,
+                  author: {
+                    accountId: comment.author.accountId,
+                    displayName: comment.author.displayName,
+                    avatarUrl: avatarUrl
+                  }
+                };
+              });
+              
+              // Log the first processed comment to verify structure
+              if (subtaskData.comments.length > 0) {
+                console.log("Sample processed comment:", JSON.stringify(subtaskData.comments[0], null, 2));
+              }
             }
 
             return subtaskData;

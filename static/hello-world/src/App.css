@@ -8,7 +8,7 @@ html, body, #root, .container {
   .container {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     max-width: 100%;
-    padding: 10px 10px 10px 0;
+    padding: 10px 20px 10px 0; /* Increased right padding */
     box-sizing: border-box;
   }
   
@@ -79,6 +79,9 @@ html, body, #root, .container {
     margin-bottom: 16px;
     background-color: #FFFFFF;
     box-shadow: 0 1px 1px rgba(9, 30, 66, 0.08);
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden; /* Prevent content overflow */
   }
   
   .subtask-item.status-warning {
@@ -261,80 +264,118 @@ html, body, #root, .container {
   .subtask-details {
     padding: 0 16px 16px 16px;
     border-top: 1px solid #F4F5F7;
+    box-sizing: border-box; /* Add box-sizing */
+    width: 100%; /* Ensure full width */
   }
   
   .comments-section {
-    margin-top: 16px;
+    margin-top: 24px;
+    border-radius: 8px;
+    padding: 16px;
   }
   
   .comments-heading {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #172B4D;
     margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #DFE1E6;
   }
   
   .comment-item {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    background-color: white;
+    border-radius: 6px;
+    padding: 12px;
+    box-shadow: 0 1px 2px rgba(9, 30, 66, 0.08);
+    border: 1px solid rgba(9, 30, 66, 0.08);
   }
   
   .comment-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 4px;
+    align-items: center;
+    margin-bottom: 8px;
   }
   
   .comment-author {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: #172B4D;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   
   .comment-time {
-    font-size: 14px;
+    font-size: 12px;
     color: #6B778C;
   }
   
   .comment-content {
-    font-size: 14px;
+    font-size: 13px;
     color: #172B4D;
-    line-height: 1.5;
+    line-height: 1.4;
+    margin-left: 32px;
   }
   
   .comment-input {
     margin-top: 16px;
     position: relative;
+    background-color: white;
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 1px 2px rgba(9, 30, 66, 0.08);
+    box-sizing: border-box; /* Add box-sizing */
+    width: calc(100% - 8px); /* Account for padding */
   }
   
   .comment-input input {
-    width: 100%;
-    max-width: 100%; /* Ensure it doesn't exceed the container's width */
-    box-sizing: border-box; /* Include padding and border in the width calculation */
-    padding: 12px;
+    width: calc(100% - 40px); /* Account for submit button */
+    padding: 8px 40px 8px 12px;
     border: 1px solid #DFE1E6;
-    border-radius: 3px;
-    font-size: 14px;
+    border-radius: 4px;
+    font-size: 13px;
     color: #172B4D;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+  }
+  
+  .comment-input input:focus {
+    outline: none;
+    border-color: #4C9AFF;
+    box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.2);
   }
   
   .comment-input input::placeholder {
-    color: #6B778C;
+    color: #97A0AF;
   }
   
   .comment-submit {
     position: absolute;
-    right: 8px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     background-color: #0052CC;
     border: none;
-    border-radius: 3px;
-    width: 32px;
-    height: 32px;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .comment-submit:hover {
+    background-color: #0065FF;
+  }
+  
+  .comment-submit:disabled {
+    background-color: #091E420F;
+    cursor: not-allowed;
   }
   
   .loading-container {
@@ -449,4 +490,114 @@ html, body, #root, .container {
     to {
       transform: rotate(360deg);
     }
+  }
+
+  /* Comments section background colors based on subtask status */
+  .status-completed .comments-section {
+    background-color: #F4FFF8; /* Light green */
+  }
+  
+  .status-progress .comments-section,
+  .status-pending .comments-section {
+    background-color: #F8FAFF; /* Light blue */
+  }
+  
+  .status-warning .comments-section,
+  .status-approval .comments-section {
+    background-color: #FFFBF6; /* Light yellow/orange */
+  }
+  
+  .status-open .comments-section,
+  .status-reopened .comments-section {
+    background-color: #F4F5F7; /* Light grey */
+  }
+
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #DFE1E6;
+    border: 1px solid rgba(9, 30, 66, 0.08);
+  }
+
+  .app-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #0052CC;
+    color: white;
+    font-size: 9px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0;
+    border: 1px solid rgba(9, 30, 66, 0.08);
+  }
+
+  .fallback-avatar {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #DFE1E6;
+    position: relative;
+  }
+
+  .fallback-avatar::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%236B778C" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-6.627 0-12 4.208-12 9.4C0 24 5.373 24 12 24s12 0 12-.6C24 18.208 18.627 14 12 14z"/></svg>');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* Remove the old ::before pseudo-element */
+  .comment-author::before {
+    display: none;
+  }
+
+  .user-avatar-container {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(9, 30, 66, 0.08);
+  }
+
+  .user-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .fallback-avatar-text {
+    font-size: 10px;
+    font-weight: 600;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    display: none;
+  }
+
+  /* Helper function to generate colors */
+  :root {
+    --avatar-colors: #0052CC, #00B8D9, #36B37E, #6554C0, #FF5630, #FF8B00, #6B778C;
   }
