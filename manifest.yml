@@ -25,3 +25,6 @@ permissions:
     - write:issue:jira
     - read:user:jira
     - storage:app
+  content:
+    styles:
+      - 'unsafe-inline'

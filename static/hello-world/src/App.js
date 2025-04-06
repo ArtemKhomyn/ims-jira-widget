@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@forge/bridge';
 import ADFRenderer from './ADFRenderer';
+import { Editor } from '@atlaskit/editor-core';
+import { MentionProvider } from '@atlaskit/mention';
+import { MediaProvider } from '@atlaskit/media-core';
 
 import './App.css';
 
@@ -420,6 +423,21 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
     return text;
   };
 
+  const mentionProvider = Promise.resolve({
+    shouldHighlightMention: mention => true,
+  });
+
+  const mediaProvider = Promise.resolve({
+    uploadParams: {
+      collection: 'subtask-media',
+    },
+  });
+
+  const handleEditorSubmit = async (editorContent) => {
+    const comment = JSON.stringify(editorContent); // Convert editor content to JSON
+    await onAddComment(subTask.key, comment);
+  };
+
   return (
     <div className={`subtask-item ${statusInfo.itemClass}`}>
       <div className="subtask-header">
@@ -459,40 +477,6 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
       
       {isExpanded && (
         <div className="subtask-details">
-          {/* Always show attachments section with upload button */}
-          <div className="attachments-section">
-            <h4 className="attachments-heading">Attachments</h4>
-            
-            {subTask.attachments && subTask.attachments.length > 0 ? (
-              <div className="attachments-list">
-                {subTask.attachments.map(attachment => (
-                  <div key={attachment.id} className="attachment-item">
-                    <a href={attachment.content} target="_blank" rel="noopener noreferrer">
-                      {attachment.filename}
-                    </a>
-                    <span className="attachment-size">
-                      {formatFileSize(attachment.size)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>No attachments yet</p>
-            )}
-            
-            <div className="file-upload">
-              <label className="file-upload-label">
-                <span>{isUploading ? 'Uploading...' : 'Upload file'}</span>
-                <input 
-                  type="file" 
-                  className="file-upload-input" 
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                />
-              </label>
-            </div>
-          </div>
-          
           {(subTask.comments || subTask.fields?.comment?.comments) && (
             <div className="comments-section">
               <h4 className="comments-heading">Comments</h4>
@@ -547,20 +531,13 @@ function SubTaskItem({ subTask, onApprove, onReject, onAddComment, onUploadFile 
           )}
           
           <div className="comment-input">
-            <input
-              type="text"
+            <Editor
+              appearance="comment"
+              mentionProvider={mentionProvider}
+              mediaProvider={mediaProvider}
+              onSave={handleEditorSubmit}
               placeholder="Add a comment..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleCommentSubmit()}
             />
-            <button 
-              className="comment-submit" 
-              onClick={handleCommentSubmit}
-              disabled={!comment.trim() || isSubmitting}
-            >
-              {isSubmitting ? <CustomSpinner size="small" /> : <SendIcon />}
-            </button>
           </div>
         </div>
       )}
